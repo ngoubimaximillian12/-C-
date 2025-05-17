@@ -1,0 +1,167 @@
+ ==============================
+ Petition Web App - User & Technical Guide
+ ==============================
+ Introduction
+ ------------
+ Users can create, sign, and manage petitions on the Petition Web Application, a fully featured online platform. It supports a role-based system comprising general members and administrators.  Members can register, log in, and create petitions for public support.  Other users can view and sign these petitions.  Administrators, on the other hand, have access to enhanced tools for managing users and petitions across the platform.  From both the user's and the developer's point of view, this guide provides a comprehensive overview of the application's operation. ----------------------------------
+ How to Set Up and Run the Website
+ ----------------------------------
+ 1.  Prerequisites
+   - At least Visual Studio 2022   - . NET SDK 6 or 7 installed
+   - SQL Server or SQL Server Express
+   - LocalDB or a configured connection string
+   - Git (optional, for version control)
+ 2.  Plan of the Project   - The main entry point for the application is Program.cs.   - `Controllers/` — Manages app logic (MVC)
+   - The data schema is defined by "Models/."   - "Views/": front-end Razor files   Static files (CSS, JS, uploads) can be found in wwwroot/.   - `appsettings.json` — Configuration for database connection, identity setup
+ 3.  Utilizing the App   - In Visual Studio, open "Petition.sln."   - Set `Petition` as the startup project
+   - Run `Update-Database` in the Package Manager Console to apply migrations
+   - To begin, press F5 -------------------------
+ Core Functionality by Role
+ -------------------------
+ 1.  Visitors
+ - Can browse all petitions on the homepage
+ - Cannot create or sign petitions
+ - Must register/login to participate
+ 2.  Members
+ - Able to sign in and register - Can create new petitions with banners
+ - Can view petition details
+ - Can sign any petition once
+ - Can view who has signed a petition
+ - Logout available via top navigation
+ 3.  Administrators
+ - Access to an admin dashboard
+ - Can view total users, petitions, blocked accounts
+ - Can manage members: block/unblock accounts
+ - Is able to remove any petition ------------------------------------------
+ Petition Creation and Signature Lifecycle
+ ------------------------------------------
+ Creation of a Petition - A user who is logged in arrives at the "Create Petition" page. They include a title, a description, and an optional banner image. - Upon submission, the petition is saved and viewable on the homepage.
+ Petition Details
+ - Clicking on a petition displays its full description, image, and signature list.
+ - Signed members are listed with timestamps.
+ Signing Petitions
+ - Users can only sign once per petition.
+ - An optional note (signature text) is added. - Signatures are saved with the user’s ID and date.
+ Display of Signature - The "List()" method in the "SignaturesController" lets other users see who signed each petition. -------------------------
+ Authentication and Users
+ -------------------------
+ Registration
+ - Email, a password, and personal information are provided by users. - They are assigned the "Member" role by default.
+ - Uses `ASP.NET Identity` for secure password hashing and storage.
+ Login
+ - Email and password are validated.
+ - Login is denied if the account is blocked. - If successful, session is created and redirected to homepage.
+ Logout
+ - The top menu lets users log out. - The session is ended, and they are taken to the login page. --------------------------
+ Admin Dashboard Overview
+ --------------------------
+ Admins have exclusive access to:
+ Dashboard
+ - Shows total members, petitions, blocked accounts
+ Manage Members
+ - Lists all registered users
+ - Any account can be blocked or unblocked by admins. Control Petitions - View all petitions
+ - Remove any petition that goes against the terms. ---------------
+ A Look at the Backend ---------------
+ Database (EF Core + SQL Server)
+ - Signatures and Petitions are kept in relational tables. - Member adds additional properties as an extension of IdentityUser. - Relationships:
+  - Petition -> many Signatures
+  - Member -> many Signatures
+ Controllers
+ - `HomeController` — Displays homepage and petition list
+ - The "PetitionsController" is in charge of creating, viewing, deleting, and signing documents. - `SignaturesController` — Manages signature storage and listing
+ - `MembersController` — Registration, login, logout logic
+ - `AdminController` — Dashboard and management tools
+ ViewModels
+ - Used to pass formatted data to views (e.g., `SignPetitionViewModel`, `AdminDashboardViewModel`)
+ Session & Identity
+ - User ID stored in session for tracking
+ - Uses role-based authorization for pages
+ - The configuration of cookies ensures a safe login state. Uploads of Files - The images of the petition are uploaded to "wwwroot/uploads." - Filenames are made unique using GUIDs
+ --------------------------
+ Extending the Application
+ --------------------------
+ Adding Comments to Petitions
+ - Include a "Comment" model that connects "Member" and "Petition" - Create views and a "CommentController" Email Notifications
+ - Integrate with SendGrid or SMTP
+ - Inform users of updates to petitions they have signed. Search and Filters
+ - Implement search bar on homepage
+ - Include options for filtering by category, date, and popularity Admin Approval Flow
+ - Add a boolean `IsApproved` to `Petition`
+ - Display only approved petitions on the homepage Authentication with Two Factors - For additional security, enable 2FA through ASP.NET Identity. Social Sharing
+ - Add Twitter/Facebook/Email share buttons
+ - Auto-generate shareable petition links
+ Analytics
+ - Add graphs to the admin dashboard
+ - Show petition popularity over time
+ ------------------
+ Error Handling
+ ------------------
+ - For unhandled exceptions, the app uses "Error()" in the "HomeController" class. - Identity operations handle errors like:
+  - Weak passwords
+  - Duplicate emails
+  - Accounts locked ----------------------
+ Summary and Conclusion
+ ----------------------
+ For managing online causes, the Petition web application is a powerful, secure, and extensible platform. Members can easily register, create petitions, and gather support from other users.  To ensure user safety and platform integrity, the admin interface provides complete oversight. Its ASP.NET MVC architecture makes it ideal for expansion in the future, whether through integrations, analytics, or other new features. Developers can enhance the platform with minimal effort thanks to its modular design.
+ Whether you're launching a real petition campaign or demonstrating full-stack ASP.NET skills, this project serves as an excellent foundation.
+ ------------------------------
+ Advanced Developer Insights
+ ------------------------------
+ Understanding MVC Architecture in ASP.NET Core
+ The Model-View-Controller (MVC) architecture, which has been demonstrated to efficiently organize code, is utilized in this web application. The result is as follows: - Model – Represents the data structure.  For instance, "Member," "Petition_signature," and "PetitionTable" - View: The UI is represented here. Razor Views (*.cshtml files) are tightly integrated with the C# models.
+ - Controller – Handles logic and user input.  For instance, `PetitionsController` handles creation and viewing logic.
+ This separation makes the application easy to maintain, test, and scale.
+ Entity Framework Code First
+ The application uses EF Core in a Code First approach.  Migrations are used to apply the database's structures, which are defined by the models (classes). For instance: ```csharp
+ public class Petition_signature {
+    public int Id { get; set; }
+    SignatureText is a public string with get, set, and    public DateTime SignedAt { get; set; }
+    public string MemberId { get; set; }
+    public int PetitionId { get; set; }
+ }
+ ```
+ EF automatically interprets this and creates a SQL table called `Petition_signature`.
+ ------------------------------
+ More Details on Authentication ------------------------------
+ ASP.NET Identity
+ To manage authorization and authentication, the app makes use of ASP.NET Core Identity. In order to ensure the safety of user credentials, it is integrated with "EntityFrameworkCore." Key features include:
+ - Password hashing using PBKDF2
+ - Authorization based on roles (Admin, Member) - Login, registration, logout, and session tracking
+ - Cookie configuration to handle access denied and login redirects
+ Example of Custom User Class
+ ```csharp
+ public class Member : IdentityUser {
+    public string FirstName { get; set; }
+    public string LastName { get; set; }
+    public bool IsBlocked { get; set; }
+    public string Role { get; set; }
+ }
+ ```
+ This extends `IdentityUser` to include custom fields like `FirstName`, `Role`, and `IsBlocked`.
+ Cookie Paths Customized In `Program.cs`, we set custom paths:
+ ```csharp
+ options.LoginPath = "/Members/Login";
+ options.AccessDeniedPath = "/Members/AccessDenied";
+ ```
+ This ensures unauthorized users are redirected properly.
+ ------------------------------
+ Best Practices for Scaling
+ ------------------------------
+ As your platform gains popularity, scaling it securely and efficiently is important.  Here are some suggestions:
+ 1.  Database Optimization
+   - Include foreign key indexing (PetitionId, MemberId)   - For large-scale operations, use stored procedures.   - Implement caching for frequently accessed petitions
+ 2.  Security Enhancements
+   - In order to stop brute-force attacks, add rate limiting.   - Use HTTPS in production with HSTS
+   - Implement CAPTCHA during registration to block bots
+ 3.  Performance
+   - Use `AsNoTracking()` for read-only queries
+   - Use pagination on petition lists
+   - Make image uploads more efficient (compress before storing) 4.  Logging and Monitoring   - Use `ILogger<T>` throughout controllers
+   - Integrate Application Insights or Serilog
+   - Log user activities for audits
+ ------------------------------
+ UI/UX Recommendations
+ ------------------------------
+ To make the website easier to use: - Responsive Design
+  - Use Bootstrap classes (`container`, `row`
